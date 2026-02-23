@@ -39,9 +39,9 @@
         
         <!-- LOGO FIJO PIDECLICK (Ya no usa ID dinámico) -->
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-xl overflow-hidden border-2 border-white shadow-md bg-primary flex items-center justify-center">
+          <div class="w-12 h-12 rounded-xl overflow-hidden shadow-md bg-primary flex items-center justify-center">
              <!-- Logo Estático PideClick -->
-             <img src="/img/logo.png" alt="Logo PideClick" class="w-full h-full object-cover">
+             <img src="/img/logo2.png" alt="Logo PideClick" class="w-full h-full object-cover">
           </div>
           <div>
             <h1 class="text-xl font-bold text-white font-display">PideClick</h1>
@@ -176,10 +176,15 @@
   <footer class="bg-primary-dark text-white py-8 mt-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6">
       <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-        <div class="text-center md:text-left">
-          <h4 class="text-xl font-black font-display text-zinc-950">PideClick</h4>
-          <p class="text-zinc-300 text-sm mt-1">Solución digital para tu negocio.</p>
-        </div>
+        <div class="flex items-center gap-3 justify-center md:justify-start">
+  <img src="/img/logo2.png" 
+       alt="Logo PideClick" 
+       class="w-16 md:w-20 h-auto object-contain">
+  <div>
+    <h4 class="text-xl font-black font-display text-white">PideClick</h4>
+    <p class="text-zinc-400 text-sm">Solución digital para tu negocio.</p>
+  </div>
+</div>
         <div class="flex items-center gap-2 bg-zinc-900 rounded-xl p-1 shadow-md shadow-black/20 border border-zinc-800">
           <button id="btnAdmin" onclick="switchView('admin')" class="nav-tab px-4 py-2 rounded-lg text-sm font-medium transition-all text-zinc-300 hover:text-white">Admin</button>
         </div>
