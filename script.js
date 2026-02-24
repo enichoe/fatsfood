@@ -24,8 +24,11 @@ let currentView = 'cliente';
 let currentCustomProductId = null;
 let currentDispatchOrderId = null;
 
+let isAdminAuthenticated = sessionStorage.getItem('su_admin_auth') === 'true';
+
 document.addEventListener('DOMContentLoaded', () => {
   loadGlobalImages(); // Solo carga el banner ahora
+  loadCustomSettings(); // Carga eslogan y redes sociales
   renderProducts();
   renderOrders();
   updateOrderCounts();
@@ -38,8 +41,42 @@ function saveData() {
     localStorage.setItem('su_orders', JSON.stringify(orders));
   } catch (e) {
     console.error("Error guardando en localStorage:", e);
-    alert("Error: No se pudo guardar. Es posible que las imágenes sean demasiado pesadas. Intenta con una imagen más pequeña.");
+    showNotification("Error", "No se pudo guardar. Es posible que las imágenes sean demasiado pesadas.", "error");
   }
+}
+
+// ======================== SISTEMA DE NOTIFICACIONES (TOAST) ========================
+function showNotification(title, message, type = 'success') {
+  const container = document.getElementById('notification-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  
+  const icon = {
+    success: `<svg class="toast-icon text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+    error: `<svg class="toast-icon text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+    warning: `<svg class="toast-icon text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`
+  }[type];
+
+  toast.innerHTML = `
+    ${icon}
+    <div class="toast-content">
+      <div class="toast-title">${title}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+  `;
+
+  container.appendChild(toast);
+
+  // Trigger animation
+  setTimeout(() => toast.classList.add('show'), 10);
+
+  // Remove after 4 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 400);
+  }, 4000);
 }
 
 // ======================== GESTIÓN DE IMÁGENES GLOBALES ========================
@@ -58,9 +95,9 @@ function uploadGlobalImage(type, input) {
           localStorage.setItem('su_banner', e.target.result);
           const bannerImg = document.getElementById('mainBanner');
           if (bannerImg) bannerImg.src = e.target.result;
-          alert('Banner actualizado y guardado con éxito');
+          showNotification("Éxito", "Banner actualizado correctamente");
         } catch (err) {
-          alert('Error: La imagen del banner es demasiado pesada para el navegador.');
+          showNotification("Error", "La imagen es demasiado pesada", "error");
         }
       }
     };
@@ -68,18 +105,121 @@ function uploadGlobalImage(type, input) {
   }
 }
 
+// ======================== GESTIÓN DE PERSONALIZACIÓN ========================
+function loadCustomSettings() {
+  const slogan = localStorage.getItem('su_custom_slogan') || "Tu frase favorita aquí";
+  const tiktok = localStorage.getItem('su_custom_tiktok') || "#";
+  const instagram = localStorage.getItem('su_custom_instagram') || "#";
+  const whatsappNum = localStorage.getItem('su_custom_whatsapp') || "";
+  const deliveryWhatsappNum = localStorage.getItem('su_custom_delivery_whatsapp') || "";
+  const facebook = localStorage.getItem('su_custom_facebook') || "#";
+  const location = localStorage.getItem('su_custom_location') || "#";
+  const openTime = localStorage.getItem('su_custom_open_time') || "08:00";
+  const closeTime = localStorage.getItem('su_custom_close_time') || "23:00";
+
+  const whatsappUrl = whatsappNum ? `https://wa.me/51${whatsappNum}` : "#";
+
+  // Actualizar Vista Cliente
+  const sloganEl = document.getElementById('customSlogan');
+  const tiktokEl = document.getElementById('linkTiktok');
+  const instagramEl = document.getElementById('linkInstagram');
+  const whatsappEl = document.getElementById('linkWhatsapp');
+  const facebookEl = document.getElementById('linkFacebook');
+  const locationEl = document.getElementById('linkLocation');
+
+  if (sloganEl) sloganEl.textContent = slogan;
+  if (tiktokEl) tiktokEl.href = tiktok;
+  if (instagramEl) instagramEl.href = instagram;
+  if (whatsappEl) whatsappEl.href = whatsappUrl;
+  if (facebookEl) facebookEl.href = facebook;
+  if (locationEl) locationEl.href = location;
+
+  updateStoreStatusUI(openTime, closeTime);
+
+  // Actualizar Inputs Admin
+  const adminSlogan = document.getElementById('adminSlogan');
+  const adminTiktok = document.getElementById('adminTiktok');
+  const adminInstagram = document.getElementById('adminInstagram');
+  const adminWhatsapp = document.getElementById('adminWhatsapp');
+  const adminDeliveryWhatsapp = document.getElementById('adminDeliveryWhatsapp');
+  const adminFacebook = document.getElementById('adminFacebook');
+  const adminLocation = document.getElementById('adminLocation');
+  const adminOpenTime = document.getElementById('adminOpenTime');
+  const adminCloseTime = document.getElementById('adminCloseTime');
+
+  if (adminSlogan) adminSlogan.value = slogan;
+  if (adminTiktok) adminTiktok.value = tiktok;
+  if (adminInstagram) adminInstagram.value = instagram;
+  if (adminWhatsapp) adminWhatsapp.value = whatsappNum;
+  if (adminDeliveryWhatsapp) adminDeliveryWhatsapp.value = deliveryWhatsappNum;
+  if (adminFacebook) adminFacebook.value = facebook;
+  if (adminLocation) adminLocation.value = location;
+  if (adminOpenTime) adminOpenTime.value = openTime;
+  if (adminCloseTime) adminCloseTime.value = closeTime;
+}
+
+function saveCustomSettings() {
+  const slogan = document.getElementById('adminSlogan').value;
+  const tiktok = document.getElementById('adminTiktok').value;
+  const instagram = document.getElementById('adminInstagram').value;
+  let whatsapp = document.getElementById('adminWhatsapp').value;
+  let deliveryWhatsapp = document.getElementById('adminDeliveryWhatsapp').value;
+  const facebook = document.getElementById('adminFacebook').value;
+  const location = document.getElementById('adminLocation').value;
+  const openTime = document.getElementById('adminOpenTime').value;
+  const closeTime = document.getElementById('adminCloseTime').value;
+
+  // Limpiar los números de WhatsApp
+  whatsapp = whatsapp.replace(/\D/g, '');
+  deliveryWhatsapp = deliveryWhatsapp.replace(/\D/g, '');
+
+  localStorage.setItem('su_custom_slogan', slogan);
+  localStorage.setItem('su_custom_tiktok', tiktok);
+  localStorage.setItem('su_custom_instagram', instagram);
+  localStorage.setItem('su_custom_whatsapp', whatsapp);
+  localStorage.setItem('su_custom_delivery_whatsapp', deliveryWhatsapp);
+  localStorage.setItem('su_custom_facebook', facebook);
+  localStorage.setItem('su_custom_location', location);
+  localStorage.setItem('su_custom_open_time', openTime);
+  localStorage.setItem('su_custom_close_time', closeTime);
+
+  loadCustomSettings(); // Recargar visualmente
+  showNotification("Éxito", "Personalización guardada correctamente");
+}
+
 // ======================== CAMBIO DE VISTAS ========================
 function switchView(view) {
+  if (view === 'admin' && !isAdminAuthenticated) {
+    openLoginModal();
+    return;
+  }
+
   currentView = view;
   document.getElementById('clienteView').classList.toggle('hidden', view !== 'cliente');
   document.getElementById('adminView').classList.toggle('hidden', view !== 'admin');
   document.getElementById('cartIndicator').classList.toggle('hidden', view !== 'cliente');
-  document.getElementById('btnCliente').classList.toggle('active', view === 'cliente');
-  document.getElementById('btnCliente').classList.toggle('text-white', view === 'cliente');
-  document.getElementById('btnCliente').classList.toggle('text-zinc-300', view !== 'cliente');
-  document.getElementById('btnAdmin').classList.toggle('active', view === 'admin');
-  document.getElementById('btnAdmin').classList.toggle('text-white', view === 'admin');
-  document.getElementById('btnAdmin').classList.toggle('text-zinc-300', view !== 'admin');
+  
+  // Mostrar u ocultar acciones de admin en la cabecera
+  const adminNav = document.getElementById('adminNavActions');
+  if (adminNav) {
+    adminNav.classList.toggle('hidden', view !== 'admin');
+    adminNav.classList.toggle('flex', view === 'admin');
+  }
+
+  // Actualizar estados visuales de los botones de navegación (si existen)
+  const btnCliente = document.getElementById('btnCliente');
+  if (btnCliente) {
+    btnCliente.classList.toggle('active', view === 'cliente');
+    btnCliente.classList.toggle('text-white', view === 'cliente');
+    btnCliente.classList.toggle('text-zinc-300', view !== 'cliente');
+  }
+  
+  const btnAdmin = document.getElementById('btnAdmin');
+  if (btnAdmin) {
+    btnAdmin.classList.toggle('active', view === 'admin');
+    btnAdmin.classList.toggle('text-white', view === 'admin');
+    btnAdmin.classList.toggle('text-zinc-300', view !== 'admin');
+  }
 }
 
 function switchAdminTab(tab) {
@@ -312,6 +452,12 @@ function closeCart() {
 // ======================== CHECKOUT ========================
 function openCheckoutModal() {
   if (cart.length === 0) return;
+  
+  if (!isStoreOpen()) {
+    showNotification("Cerrado", "El local está cerrado actualmente. Vuelva mañana.", "warning");
+    return;
+  }
+
   toggleCart();
   updateCheckoutTotals();
   togglePaymentFields(); 
@@ -446,7 +592,10 @@ function renderOrders() {
       <div class="p-4">
         <div class="flex justify-between items-start mb-3">
           <div>
-            <span class="text-xs text-white px-2 py-0.5 rounded-full ${o.type === 'delivery' ? 'bg-primary-dark' : 'bg-success'}">${o.type === 'delivery' ? 'Delivery' : 'Recojo'}</span>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs text-white px-2 py-0.5 rounded-full ${o.type === 'delivery' ? 'bg-primary-dark' : 'bg-success'}">${o.type === 'delivery' ? 'Delivery' : 'Recojo'}</span>
+              <span class="text-[10px] text-zinc-400 font-medium">${formatDate(o.createdAt)}</span>
+            </div>
             <div class="flex items-center gap-2 mt-1">
               <span class="font-bold text-lg text-primary">#${o.id}</span>
               <span class="px-2 py-0.5 rounded-full text-xs font-medium status-${o.status}">${getStatusText(o.status)}</span>
@@ -491,13 +640,18 @@ function openDispatchModal(id) {
   
   document.getElementById('dispatchContent').innerHTML = `
     <div class="bg-zinc-950 rounded-xl p-4 space-y-2 text-sm">
-      <p><strong>Cliente:</strong> ${o.customer.name}</p><p><strong>Telf:</strong> ${o.customer.phone}</p><p><strong>Dir:</strong> ${o.customer.address}</p>
+      <div class="flex justify-between items-start">
+        <p><strong>Cliente:</strong> ${o.customer.name}</p>
+        <span class="text-[10px] text-zinc-500">${formatDate(o.createdAt)}</span>
+      </div>
+      <p><strong>Telf:</strong> ${o.customer.phone}</p><p><strong>Dir:</strong> ${o.customer.address}</p>
       <a href="${mapsLink}" target="_blank" class="text-primary underline block">Ver en Maps</a><hr class="my-2">
       <p><strong>Pedido:</strong> ${itemsText}</p><p class="text-lg font-bold text-right">Total: S/. ${o.total.toFixed(2)}</p>
     </div>`;
   const waMsg = encodeURIComponent(`*Pedido #${o.id}*\nCliente: ${o.customer.name}\nDir: ${o.customer.address}\nMaps: ${mapsLink}\nTotal: S/. ${o.total.toFixed(2)}`);
-  document.getElementById('whatsappDeliveryLink').href = `https://wa.me/51999999999?text=${waMsg}`;
-  document.getElementById('printArea').innerHTML = `<div style="font-family: monospace; width: 100%;"><h2 style="text-align:center;">PIDECLICK</h2><hr><p>Pedido: #${o.id}</p><p>Cliente: ${o.customer.name}</p><p>Dir: ${o.customer.address}</p><p>Telf: ${o.customer.phone}</p><hr>${o.items.map(i => `<p>${i.quantity}x ${i.name} - S/.${(i.price*i.quantity).toFixed(2)}</p>`).join('')}<hr><p><strong>TOTAL: S/. ${o.total.toFixed(2)}</strong></p></div>`;
+  const deliveryNum = localStorage.getItem('su_custom_delivery_whatsapp') || "999999999";
+  document.getElementById('whatsappDeliveryLink').href = `https://wa.me/51${deliveryNum}?text=${waMsg}`;
+  document.getElementById('printArea').innerHTML = `<div style="font-family: monospace; width: 100%;"><h2 style="text-align:center;">PIDECLICK</h2><p style="text-align:center; font-size:10px;">${formatDate(o.createdAt)}</p><hr><p>Pedido: #${o.id}</p><p>Cliente: ${o.customer.name}</p><p>Dir: ${o.customer.address}</p><p>Telf: ${o.customer.phone}</p><hr>${o.items.map(i => `<p>${i.quantity}x ${i.name} - S/.${(i.price*i.quantity).toFixed(2)}</p>`).join('')}<hr><p><strong>TOTAL: S/. ${o.total.toFixed(2)}</strong></p></div>`;
   document.getElementById('dispatchModal').classList.remove('hidden');
   document.getElementById('dispatchModal').classList.add('flex');
 }
@@ -556,7 +710,7 @@ function saveProduct(e) {
   const category = document.getElementById('productCategory').value;
   const price = parseFloat(document.getElementById('productPrice').value);
   const description = document.getElementById('productDescription').value;
-  if (!name || isNaN(price)) { alert('Por favor completa los campos correctamente'); return; }
+  if (!name || isNaN(price)) { showNotification("Atención", "Por favor completa los campos correctamente", "warning"); return; }
   const available = document.getElementById('productAvailable').checked;
   const imageInput = document.getElementById('productImageInput');
   if (imageInput.files && imageInput.files[0]) {
@@ -583,8 +737,123 @@ function finishSave(id, name, category, price, description, available, image) {
   renderProducts(); 
   renderAdminProducts();
   closeProductModal(); 
-  setTimeout(() => alert('Producto guardado correctamente'), 100);
+  showNotification("Éxito", "Producto guardado correctamente");
 }
 
 function editProduct(id) { openProductModal(id); }
 function deleteProduct(id) { if(confirm('Eliminar?')) { products = products.filter(p => p.id !== id); saveData(); renderProducts(); renderAdminProducts(); } }
+
+function formatDate(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const now = new Date();
+  
+  const options = { hour: '2-digit', minute: '2-digit', hour12: true };
+  const timeStr = date.toLocaleTimeString('es-PE', options);
+  
+  // Si es hoy, solo mostrar la hora
+  if (date.toDateString() === now.toDateString()) {
+    return `Hoy, ${timeStr}`;
+  }
+  
+  // Si es ayer
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) {
+    return `Ayer, ${timeStr}`;
+  }
+
+  const dateOptions = { day: '2-digit', month: 'short' };
+  return `${date.toLocaleDateString('es-PE', dateOptions)}, ${timeStr}`;
+}
+
+function isStoreOpen() {
+  const openTime = localStorage.getItem('su_custom_open_time') || "08:00";
+  const closeTime = localStorage.getItem('su_custom_close_time') || "23:00";
+  
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  
+  const [openHours, openMins] = openTime.split(':').map(Number);
+  const [closeHours, closeMins] = closeTime.split(':').map(Number);
+  
+  const openTotalMins = openHours * 60 + openMins;
+  const closeTotalMins = closeHours * 60 + closeMins;
+  
+  // Manejo básico: asume que el cierre es después de la apertura en el mismo día
+  // Si quisiéramos cierre de madrugada (ej: 02:00) necesitaríamos lógica extra
+  return currentMinutes >= openTotalMins && currentMinutes < closeTotalMins;
+}
+
+function updateStoreStatusUI(open, close) {
+  const badge = document.getElementById('storeStatusBadge');
+  const text = document.getElementById('storeHoursDisplay');
+  if (!badge || !text) return;
+
+  const isOpen = isStoreOpen();
+  
+  if (isOpen) {
+    badge.textContent = "Abierto Ahora";
+    badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-1 bg-green-500/20 text-green-500 border border-green-500/30";
+  } else {
+    badge.textContent = "Cerrado";
+    badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-1 bg-red-500/20 text-red-500 border border-red-500/30";
+  }
+  
+  text.textContent = `Horario: ${open} a ${close}`;
+}
+
+function getBusinessLocation() {
+  if (navigator.geolocation) {
+    showNotification("GPS", "Capturando ubicación actual...");
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+        document.getElementById('adminLocation').value = mapsUrl;
+        showNotification("Éxito", "Ubicación capturada correctamente");
+      },
+      err => {
+        showNotification("Error", "No se pudo obtener la ubicación. Asegúrate de dar permisos.", "error");
+      }
+    );
+  } else {
+    showNotification("Error", "Tu navegador no soporta geolocalización", "error");
+  }
+}
+
+// ======================== SISTEMA DE LOGIN ADMIN ========================
+function openLoginModal() {
+  document.getElementById('loginModal').classList.remove('hidden');
+  document.getElementById('loginModal').classList.add('flex');
+}
+
+function closeLoginModal() {
+  document.getElementById('loginModal').classList.add('hidden');
+  document.getElementById('loginModal').classList.remove('flex');
+}
+
+function loginAdmin(e) {
+  e.preventDefault();
+  const user = document.getElementById('loginUser').value;
+  const pass = document.getElementById('loginPass').value;
+
+  // Credenciales por defecto: admin / admin123
+  if (user === 'admin' && pass === 'admin123') {
+    isAdminAuthenticated = true;
+    sessionStorage.setItem('su_admin_auth', 'true');
+    closeLoginModal();
+    switchView('admin');
+    showNotification("Bienvenido", "Sesión iniciada correctamente");
+  } else {
+    showNotification("Error", "Usuario o contraseña incorrectos", "error");
+  }
+}
+
+function logoutAdmin() {
+  isAdminAuthenticated = false;
+  sessionStorage.removeItem('su_admin_auth');
+  switchView('cliente');
+  showNotification("Sesión Cerrada", "Has salido del panel de administración");
+}
