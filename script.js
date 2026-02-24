@@ -252,18 +252,18 @@ function renderProducts() {
   const filtered = currentCategory === 'todos' ? products.filter(p => p.available) : products.filter(p => p.category === currentCategory && p.available);
 
   grid.innerHTML = filtered.map((p, i) => `
-    <div class="bg-zinc-800 rounded-2xl overflow-hidden border border-zinc-800 shadow-md shadow-black/20 card-hover slide-in" style="animation-delay: ${i * 50}ms">
-      <div class="h-40 bg-gradient-to-br from-primary/5 to-zinc-900 flex items-center justify-center relative overflow-hidden">
+    <div class="bg-zinc-800 rounded-2xl overflow-hidden border border-zinc-700/50 shadow-md shadow-black/20 card-hover slide-in flex flex-col h-full" style="animation-delay: ${i * 50}ms">
+      <div class="h-32 bg-gradient-to-br from-primary/5 to-zinc-900 flex items-center justify-center relative overflow-hidden flex-shrink-0">
         ${p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : getCategoryIcon(p.category)}
       </div>
-      <div class="p-4">
-        <span class="text-xs font-bold text-primary uppercase tracking-wider">${p.category}</span>
-        <h4 class="text-lg font-bold text-white mt-1 font-display leading-tight">${p.name}</h4>
-        <p class="text-sm text-zinc-300 mt-2 line-clamp-2 leading-relaxed">${p.description}</p>
-        <div class="flex items-center justify-between mt-5">
-          <span class="text-xl font-bold text-primary">S/. ${p.price.toFixed(2)}</span>
-          <button onclick="handleAddToCart(${p.id})" class="w-12 h-12 bg-primary hover:bg-primary-dark text-white rounded-2xl flex items-center justify-center transition-all hover:scale-105 shadow-lg shadow-primary/20">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+      <div class="p-3 sm:p-4 flex flex-col flex-1">
+        <span class="text-[10px] sm:text-xs font-bold text-primary uppercase tracking-wider">${p.category}</span>
+        <h4 class="text-sm sm:text-lg font-bold text-white mt-1 font-display leading-tight line-clamp-1">${p.name}</h4>
+        <p class="text-xs sm:text-sm text-zinc-400 mt-1.5 line-clamp-2 leading-relaxed flex-1">${p.description}</p>
+        <div class="flex items-center justify-between mt-3 sm:mt-5">
+          <span class="text-sm sm:text-xl font-bold text-primary">S/. ${p.price.toFixed(2)}</span>
+          <button onclick="handleAddToCart(${p.id})" class="w-10 h-10 sm:w-12 sm:h-12 bg-primary hover:bg-primary-dark text-white rounded-xl sm:rounded-2xl flex items-center justify-center transition-all hover:scale-105 shadow-lg shadow-primary/20">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
           </button>
         </div>
       </div>
